@@ -1,0 +1,92 @@
+import { Medal, User as UserIcon } from 'lucide-react'
+
+interface LeaderboardEntry {
+    userId: string
+    name: string
+    avatar_url?: string | null
+    total: number
+}
+
+interface LeaderboardProps {
+    entries: LeaderboardEntry[]
+    unit: string
+    currentUserId?: string
+}
+
+export const Leaderboard = ({ entries, unit, currentUserId }: LeaderboardProps) => {
+    const sorted = [...entries].sort((a, b) => b.total - a.total)
+
+    return (
+        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm h-full">
+            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Medal className="text-yellow-500" />
+                Rangering
+            </h3>
+
+            <div className="space-y-4">
+                {sorted.map((entry, index) => {
+                    const isTop3 = index < 3
+                    const isMe = entry.userId === currentUserId
+
+                    return (
+                        <div
+                            key={entry.userId}
+                            className={`flex items-center p-4 rounded-2xl transition-all ${isMe ? 'bg-indigo-50 border border-indigo-100 ring-2 ring-indigo-200' : 'bg-gray-50 border border-transparent'
+                                }`}
+                        >
+                            <div className={`
+                w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm mr-4
+                ${index === 0 ? 'bg-yellow-400 text-white shadow-md' :
+                                    index === 1 ? 'bg-gray-300 text-white shadow-md' :
+                                        index === 2 ? 'bg-amber-600 text-white shadow-md' :
+                                            'bg-gray-200 text-gray-500'}
+              `}>
+                                {index + 1}
+                            </div>
+
+
+
+                            <div className="mr-3 flex-shrink-0">
+                                {entry.avatar_url ? (
+                                    <img
+                                        src={entry.avatar_url}
+                                        alt={entry.name}
+                                        className="w-10 h-10 rounded-full object-cover border border-gray-100"
+                                    />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-400">
+                                        <UserIcon size={20} />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex-grow">
+                                <div className="font-bold text-gray-900 flex items-center gap-2">
+                                    {entry.name}
+                                    {isMe && <span className="text-xs bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full">Meg</span>}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                    {entry.total} {unit}
+                                </div>
+                            </div>
+
+                            {
+                                isTop3 && (
+                                    <div className="text-2xl animate-pulse">
+                                        {index === 0 && '👑'}
+                                        {index === 1 && '🥈'}
+                                        {index === 2 && '🥉'}
+                                    </div>
+                                )
+                            }
+                        </div>
+                    )
+                })}
+
+                {sorted.length === 0 && (
+                    <div className="text-center text-gray-400 py-4">Ingen deltakere enda.</div>
+                )}
+            </div>
+        </div >
+    )
+}
