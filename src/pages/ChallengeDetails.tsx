@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { generateMotivation } from '../lib/gemini'
 import { useAuth } from '../contexts/AuthContext'
 import { QuickLog } from '../components/QuickLog'
 import { ProgressBar } from '../components/ProgressBar'
@@ -16,6 +15,8 @@ type Challenge = {
     description: string
     goal: number
     unit: string
+    start_date: string
+    end_date: string
     participants: string[]
     creator_id: string
 }
@@ -34,7 +35,6 @@ export const ChallengeDetails = () => {
     const [challenge, setChallenge] = useState<Challenge | null>(null)
     const [logs, setLogs] = useState<Log[]>([])
     const [loading, setLoading] = useState(true)
-    const [motivation, setMotivation] = useState<string | null>(null)
     const [shareMsg, setShareMsg] = useState('')
 
     const [avatars, setAvatars] = useState<Record<string, { url: string | null, name: string | null }>>({})
@@ -112,10 +112,10 @@ export const ChallengeDetails = () => {
             await supabase.from('challenges').update({ participants: newParticipants }).eq('id', id)
         }
 
-        // AI Motivation
-        const msg = await generateMotivation(amount, challenge.unit, challenge.title)
-        setMotivation(msg)
-        setTimeout(() => setMotivation(null), 8000)
+        // AI Motivation removed per user request
+        // const msg = await generateMotivation(amount, challenge.unit, challenge.title)
+        // setMotivation(msg)
+        // setTimeout(() => setMotivation(null), 8000)
 
         fetchLogs()
     }
@@ -130,12 +130,7 @@ export const ChallengeDetails = () => {
         if (!challenge || !id || !user) return
         if (!window.confirm('Er du sikker på at du vil slette denne utfordringen? Alle logger vil bli borte.')) return
 
-        // Manual cascade delete since we didn't set ON DELETE CASCADE in SQL
-        // 1. Delete all progress logs
-        // @ts-ignore
-        await supabase.from('progress_logs').delete().eq('challenge_id', id)
-
-        // 2. Delete the challenge
+        // Manual cascade delete NOT needed anymore (handled by DB)
         // @ts-ignore
         const { error } = await supabase.from('challenges').delete().eq('id', id)
 
@@ -159,6 +154,18 @@ export const ChallengeDetails = () => {
     const numParticipants = new Set(logs.map(l => l.user_id)).size || 1
     const groupGoal = challenge.goal * numParticipants
 
+    // Calculate expected progress
+    const startDate = new Date(challenge.start_date)
+    const endDate = new Date(challenge.end_date)
+    const today = new Date()
+    const totalDuration = endDate.getTime() - startDate.getTime()
+    const elapsed = today.getTime() - startDate.getTime()
+
+    let expectedRatio = 0
+    if (totalDuration > 0) {
+        expectedRatio = Math.min(Math.max(elapsed / totalDuration, 0), 1)
+    }
+    const expectedTotal = groupGoal * expectedRatio
 
 
     const leaderboardData = logs.reduce((acc, log) => {
@@ -210,14 +217,6 @@ export const ChallengeDetails = () => {
                 </div>
             )}
 
-            {motivation && (
-                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-indigo-900 text-white p-6 rounded-3xl shadow-2xl z-50 border border-indigo-500/30 animate-in slide-in-from-bottom-5">
-                    <div className="text-center">
-                        <div className="text-2xl mb-2">🤖 🚀</div>
-                        <p className="font-bold text-lg">"{motivation}"</p>
-                    </div>
-                </div>
-            )}
 
             <div className="text-center mb-8">
                 <h1 className="text-4xl font-bold text-gray-900 mb-2">{challenge.title}</h1>
@@ -226,7 +225,12 @@ export const ChallengeDetails = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-6">
-                    <ProgressBar total={totalProgress} goal={groupGoal} unit={challenge.unit} />
+                    <ProgressBar
+                        total={totalProgress}
+                        goal={groupGoal}
+                        unit={challenge.unit}
+                        expectedTotal={expectedTotal}
+                    />
 
                     {user ? (
                         <QuickLog onLog={handleLog} unit={challenge.unit} loading={false} />

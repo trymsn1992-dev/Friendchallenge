@@ -34,11 +34,7 @@ export const Dashboard = () => {
         if (!user) return
         if (!window.confirm('Er du sikker på at du vil slette denne utfordringen?')) return
 
-        // 1. Delete logs
-        // @ts-ignore
-        await supabase.from('progress_logs').delete().eq('challenge_id', challengeId)
-
-        // 2. Delete challenge
+        // 1. Delete challenge (logs deleted by cascade in DB)
         // @ts-ignore
         const { error } = await supabase.from('challenges').delete().eq('id', challengeId)
 
