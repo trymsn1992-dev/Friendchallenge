@@ -121,6 +121,66 @@ export const Profile = () => {
         }
     }
 
+    const handleConnectStrava = () => {
+        const clientId = '200015'
+        // Redirect to same page
+        const redirectUri = window.location.origin + '/profile'
+        const scope = 'activity:read_all'
+
+        window.location.href = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&approval_prompt=force&scope=${scope}`
+    }
+
+    useEffect(() => {
+        // Check for Strava code in URL
+        const params = new URLSearchParams(window.location.search)
+        const code = params.get('code')
+
+        if (code && user) {
+            exchangeStravaToken(code)
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname)
+        }
+    }, [user])
+
+    const exchangeStravaToken = async (code: string) => {
+        try {
+            setLoading(true)
+            setMessage({ type: 'success', text: 'Kobler til Strava...' })
+
+            // Call our Vercel API function
+            const response = await fetch('/api/strava-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            })
+
+            const data = await response.json()
+
+            if (data.error) throw new Error(JSON.stringify(data.error))
+
+            // Save tokens to Supabase
+            const { error } = await supabase
+                .from('profiles')
+                // @ts-ignore
+                .update({
+                    strava_access_token: data.access_token,
+                    strava_refresh_token: data.refresh_token,
+                    strava_expires_at: data.expires_at,
+                    updated_at: new Date()
+                })
+                .eq('id', user!.id)
+
+            if (error) throw error
+
+            setMessage({ type: 'success', text: 'Hurra! Strava er nå koblet til! 🏃‍♂️' })
+        } catch (error: any) {
+            console.error('Strava Error:', error)
+            setMessage({ type: 'error', text: 'Kunne ikke koble til Strava. Prøv igjen.' })
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
         <div className="max-w-md mx-auto">
             <h1 className="text-3xl font-bold text-gray-900 mb-8">Min Profil</h1>
@@ -191,6 +251,26 @@ export const Profile = () => {
                 <div className="p-4 bg-gray-50 rounded-xl">
                     <h3 className="text-sm font-medium text-gray-500 mb-2">Innlogging</h3>
                     <p className="text-gray-900">Google</p>
+                </div>
+
+                <div className="p-4 bg-orange-50 rounded-xl border border-orange-100">
+                    <h3 className="text-sm font-medium text-orange-800 mb-3 flex items-center gap-2">
+                        <span>🏃‍♂️</span> Strava Integrasjon
+                    </h3>
+
+                    {user?.app_metadata?.provider === 'strava' || (avatarUrl && avatarUrl.includes('strava')) ? (
+                        // Basic check - we'll actually check database field below
+                        <div className="text-green-600 font-medium flex items-center gap-2">
+                            <span>✅</span> Koblet til Strava
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleConnectStrava}
+                            className="w-full bg-[#FC4C02] text-white font-bold py-2.5 px-4 rounded-xl shadow-sm hover:bg-[#e34402] transition-colors flex items-center justify-center gap-2"
+                        >
+                            Connect with Strava
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

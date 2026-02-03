@@ -17,6 +17,9 @@ export type Database = {
                     achievements: string[] | null
                     avatar_url: string | null
                     full_name: string | null
+                    strava_access_token: string | null
+                    strava_refresh_token: string | null
+                    strava_expires_at: number | null
                 }
                 Insert: {
                     id: string
@@ -25,6 +28,9 @@ export type Database = {
                     achievements?: string[] | null
                     avatar_url?: string | null
                     full_name?: string | null
+                    strava_access_token?: string | null
+                    strava_refresh_token?: string | null
+                    strava_expires_at?: number | null
                 }
                 Update: {
                     id?: string
@@ -33,6 +39,9 @@ export type Database = {
                     achievements?: string[] | null
                     avatar_url?: string | null
                     full_name?: string | null
+                    strava_access_token?: string | null
+                    strava_refresh_token?: string | null
+                    strava_expires_at?: number | null
                 }
             }
             challenges: {
