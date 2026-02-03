@@ -184,6 +184,67 @@ export const ChallengeDetails = () => {
         return acc
     }, [] as { userId: string, name: string, total: number, avatar_url?: string | null }[])
 
+    const [showStravaModal, setShowStravaModal] = useState(false)
+    const [stravaActivities, setStravaActivities] = useState<any[]>([])
+    const [loadingStrava, setLoadingStrava] = useState(false)
+
+    const fetchStravaActivities = async () => {
+        if (!user) return
+        setLoadingStrava(true)
+        try {
+            const response = await fetch('/api/strava-activities', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id })
+            })
+            const data = await response.json()
+            if (data.error) throw new Error(data.error)
+            setStravaActivities(data)
+        } catch (error) {
+            console.error('Failed to fetch Strava activities', error)
+            alert('Kunne ikke hente aktiviteter fra Strava. Er du koblet til i profilen?')
+        } finally {
+            setLoadingStrava(false)
+        }
+    }
+
+    useEffect(() => {
+        if (showStravaModal) {
+            fetchStravaActivities()
+        }
+    }, [showStravaModal])
+
+    const handleImportStrava = async (activity: any) => {
+        // Convert distance/time to unit? 
+        // Simple heuristic: 
+        // 'km' -> distance / 1000
+        // 'mil' -> distance / 10000
+        // 'meter' -> distance
+        // 'minutter' -> moving_time / 60
+
+        let amount = 0
+        const unit = challenge?.unit?.toLowerCase() || ''
+
+        if (['km', 'kilometer'].includes(unit)) {
+            amount = Math.round((activity.distance / 1000) * 10) / 10
+        } else if (['mil'].includes(unit)) {
+            amount = Math.round((activity.distance / 10000) * 10) / 10
+        } else if (['m', 'meter'].includes(unit)) {
+            amount = Math.floor(activity.distance)
+        } else if (['min', 'minutter', 'timer'].includes(unit)) {
+            // Default to minutes for time based
+            amount = Math.floor(activity.moving_time / 60)
+        } else {
+            // Fallback to km if unknown distance unit, or just 1 for "workouts"
+            amount = Math.round((activity.distance / 1000) * 10) / 10
+        }
+
+        if (confirm(`Vil du logge "${activity.name}" som ${amount} ${challenge?.unit}?`)) {
+            await handleLog(amount)
+            setShowStravaModal(false)
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-start">
@@ -233,7 +294,19 @@ export const ChallengeDetails = () => {
                     />
 
                     {user ? (
-                        <QuickLog onLog={handleLog} unit={challenge.unit} loading={false} />
+                        <div className="space-y-6">
+                            <QuickLog onLog={handleLog} unit={challenge.unit} loading={false} />
+
+                            {/* Strava Import Section */}
+                            <div className="pt-4 border-t border-gray-100">
+                                <button
+                                    onClick={() => setShowStravaModal(true)}
+                                    className="w-full bg-[#FC4C02] bg-opacity-10 text-[#FC4C02] font-semibold py-3 px-4 rounded-2xl hover:bg-opacity-20 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <span>🏃‍♂️</span> Hent fra Strava
+                                </button>
+                            </div>
+                        </div>
                     ) : (
                         <div className="bg-indigo-50 p-6 rounded-3xl text-center">
                             <p className="text-indigo-800 font-medium mb-3">Logg inn for å delta!</p>
@@ -246,6 +319,52 @@ export const ChallengeDetails = () => {
 
                 <Leaderboard entries={leaderboardData} unit={challenge.unit} currentUserId={user?.id} />
             </div>
+
+            {/* Strava Modal */}
+            {showStravaModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={() => setShowStravaModal(false)}>
+                    <div className="bg-white rounded-3xl w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <span>🏃‍♂️</span> Velg aktivitet
+                            </h3>
+                            <button onClick={() => setShowStravaModal(false)} className="text-gray-400 hover:text-gray-600">
+                                Lukk
+                            </button>
+                        </div>
+
+                        <div className="overflow-y-auto p-4 space-y-3">
+                            {loadingStrava ? (
+                                <div className="py-10 text-center text-gray-500">Henter dine turer... ⏳</div>
+                            ) : stravaActivities.length === 0 ? (
+                                <div className="py-10 text-center text-gray-500">
+                                    Fant ingen aktiviteter siste 30 dager. 🤷‍♂️
+                                    <br /><span className="text-xs opacity-75">Sjekk at du har løpt litt!</span>
+                                </div>
+                            ) : (
+                                stravaActivities.map(activity => (
+                                    <button
+                                        key={activity.id}
+                                        onClick={() => handleImportStrava(activity)}
+                                        className="w-full text-left p-4 rounded-2xl border border-gray-100 hover:border-[#FC4C02] hover:bg-orange-50 transition-all group"
+                                    >
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className="font-bold text-gray-900 group-hover:text-[#FC4C02]">{activity.name}</span>
+                                            <span className="text-xs text-gray-400">
+                                                {new Date(activity.start_date).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <div className="text-sm text-gray-600 flex gap-4">
+                                            <span>📏 {(activity.distance / 1000).toFixed(2)} km</span>
+                                            <span>⏱️ {Math.floor(activity.moving_time / 60)} min</span>
+                                        </div>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
