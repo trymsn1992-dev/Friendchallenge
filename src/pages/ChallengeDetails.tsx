@@ -39,6 +39,10 @@ export const ChallengeDetails = () => {
 
     const [avatars, setAvatars] = useState<Record<string, { url: string | null, name: string | null }>>({})
 
+    const [showStravaModal, setShowStravaModal] = useState(false)
+    const [stravaActivities, setStravaActivities] = useState<any[]>([])
+    const [loadingStrava, setLoadingStrava] = useState(false)
+
     const fetchAvatars = async () => {
         const userIds = [...new Set(logs.map(l => l.user_id))]
         if (userIds.length === 0) return
@@ -76,6 +80,12 @@ export const ChallengeDetails = () => {
             supabase.removeChannel(channel)
         }
     }, [id])
+
+    useEffect(() => {
+        if (showStravaModal) {
+            fetchStravaActivities()
+        }
+    }, [showStravaModal])
 
     const fetchChallengeData = async () => {
         if (!id) return
@@ -184,10 +194,6 @@ export const ChallengeDetails = () => {
         return acc
     }, [] as { userId: string, name: string, total: number, avatar_url?: string | null }[])
 
-    const [showStravaModal, setShowStravaModal] = useState(false)
-    const [stravaActivities, setStravaActivities] = useState<any[]>([])
-    const [loadingStrava, setLoadingStrava] = useState(false)
-
     const fetchStravaActivities = async () => {
         if (!user) return
         setLoadingStrava(true)
@@ -208,11 +214,7 @@ export const ChallengeDetails = () => {
         }
     }
 
-    useEffect(() => {
-        if (showStravaModal) {
-            fetchStravaActivities()
-        }
-    }, [showStravaModal])
+
 
     const handleImportStrava = async (activity: any) => {
         // Convert distance/time to unit? 
