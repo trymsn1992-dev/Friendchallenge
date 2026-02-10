@@ -36,7 +36,7 @@ export const QuickLog = ({ onLog, unit, loading }: QuickLogProps) => {
     }
 
     return (
-        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm h-[180px] flex flex-col">
+        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Plus className="text-indigo-600" size={20} />
                 Logg Innsats
