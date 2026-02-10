@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, CheckCircle, PartyPopper } from 'lucide-react'
+import { Plus, CheckCircle } from 'lucide-react'
 
 interface QuickLogProps {
     onLog: (amount: number) => void

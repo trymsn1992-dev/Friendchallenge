@@ -43,6 +43,7 @@ export const ChallengeDetails = () => {
     const [shareMsg, setShareMsg] = useState('')
 
     const [avatars, setAvatars] = useState<Record<string, { url: string | null, name: string | null }>>({})
+    const [userLikes, setUserLikes] = useState<Set<string>>(new Set())
 
     const [showStravaModal, setShowStravaModal] = useState(false)
     const [stravaActivities, setStravaActivities] = useState<any[]>([])
@@ -112,19 +113,23 @@ export const ChallengeDetails = () => {
             .eq('challenge_id', id)
             .order('created_at', { ascending: false })
 
-        if (logsData) {
+        const logs = logsData as any[] | null
+
+        if (logs) {
             // Fetch likes count for these logs
-            const logIds = logsData.map(l => l.id)
+            const logIds = logs.map(l => l.id)
 
             if (logIds.length > 0) {
                 // Get all likes for these logs
-                const { data: likesData } = await supabase
+                const { data: likesResult } = await supabase
                     .from('likes')
                     .select('log_id, user_id')
                     .in('log_id', logIds)
 
+                const likesData = likesResult as any[] | null
+
                 // Map likes to logs
-                const logsWithLikes = logsData.map(log => {
+                const logsWithLikes = logs.map(log => {
                     const likes = likesData?.filter(l => l.log_id === log.id) || []
                     return {
                         ...log,
@@ -140,7 +145,7 @@ export const ChallengeDetails = () => {
                     setUserLikes(myLikes)
                 }
             } else {
-                setLogs(logsData.map(l => ({ ...l, likes_count: 0 })))
+                setLogs(logs.map(l => ({ ...l, likes_count: 0 })))
             }
         }
     }
@@ -167,8 +172,9 @@ export const ChallengeDetails = () => {
         })
 
         if (isLiked) {
-            await supabase.from('likes').delete().match({ log_id: logId, user_id: user.id })
+            await supabase.from('likes').delete().eq('log_id', logId).eq('user_id', user.id)
         } else {
+            // @ts-ignore
             await supabase.from('likes').insert({ log_id: logId, user_id: user.id })
         }
 

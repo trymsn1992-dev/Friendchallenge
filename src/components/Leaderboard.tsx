@@ -14,7 +14,7 @@ interface LeaderboardProps {
     goal?: number
 }
 
-export const Leaderboard = ({ entries, unit, currentUserId }: LeaderboardProps) => {
+export const Leaderboard = ({ entries, unit, currentUserId, goal }: LeaderboardProps) => {
     const sorted = [...entries].sort((a, b) => b.total - a.total)
 
     return (
