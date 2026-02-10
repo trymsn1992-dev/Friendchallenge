@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, CheckCircle, PartyPopper } from 'lucide-react'
 
 interface QuickLogProps {
     onLog: (amount: number) => void
@@ -9,23 +9,46 @@ interface QuickLogProps {
 
 export const QuickLog = ({ onLog, unit, loading }: QuickLogProps) => {
     const [customAmount, setCustomAmount] = useState('')
+    const [showSuccess, setShowSuccess] = useState(false)
+    const [lastAmount, setLastAmount] = useState(0)
 
     const presets = [10, 25, 50, 100]
 
+    const handleLog = (amount: number) => {
+        onLog(amount)
+        setLastAmount(amount)
+        setShowSuccess(true)
+        setTimeout(() => setShowSuccess(false), 2000)
+    }
+
+    if (showSuccess) {
+        return (
+            <div className="bg-green-50 rounded-3xl p-6 border border-green-100 shadow-sm flex flex-col items-center justify-center text-center h-[180px] animate-in fade-in zoom-in">
+                <div className="bg-green-100 p-3 rounded-full mb-2">
+                    <CheckCircle className="text-green-600 w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold text-green-800">Bra jobba! 🎉</h3>
+                <p className="text-green-600">
+                    Logget <span className="font-bold">+{lastAmount} {unit}</span>
+                </p>
+            </div>
+        )
+    }
+
     return (
-        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm h-[180px] flex flex-col">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Plus className="text-indigo-600" size={20} />
                 Logg Innsats
             </h3>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 flex-grow">
                 {presets.map(amount => (
                     <button
                         key={amount}
-                        onClick={() => onLog(amount)}
+                        onClick={() => handleLog(amount)}
                         disabled={loading}
-                        className="py-2 px-4 rounded-xl bg-gray-50 text-indigo-700 font-bold hover:bg-indigo-100 hover:scale-105 transition-all text-sm"
+                        className="py-2 px-4 rounded-xl bg-gray-50 text-indigo-700 font-bold hover:bg-indigo-100 hover:scale-105 transition-all text-sm h-full flex items-center justify-center"
                     >
                         +{amount}
                     </button>
@@ -44,7 +67,7 @@ export const QuickLog = ({ onLog, unit, loading }: QuickLogProps) => {
                     disabled={!customAmount || loading}
                     onClick={() => {
                         if (customAmount) {
-                            onLog(Number(customAmount))
+                            handleLog(Number(customAmount))
                             setCustomAmount('')
                         }
                     }}
