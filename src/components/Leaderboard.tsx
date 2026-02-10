@@ -12,9 +12,10 @@ interface LeaderboardProps {
     unit: string
     currentUserId?: string
     goal?: number
+    expectedTotal?: number
 }
 
-export const Leaderboard = ({ entries, unit, currentUserId, goal }: LeaderboardProps) => {
+export const Leaderboard = ({ entries, unit, currentUserId, goal, expectedTotal }: LeaderboardProps) => {
     const sorted = [...entries].sort((a, b) => b.total - a.total)
 
     return (
@@ -29,6 +30,9 @@ export const Leaderboard = ({ entries, unit, currentUserId, goal }: LeaderboardP
                     const isTop3 = index < 3
                     const isMe = entry.userId === currentUserId
                     const progress = goal ? Math.min((entry.total / goal) * 100, 100) : 0
+
+                    const diff = expectedTotal ? entry.total - expectedTotal : 0
+                    const isAhead = diff >= 0
 
                     return (
                         <div
@@ -66,8 +70,13 @@ export const Leaderboard = ({ entries, unit, currentUserId, goal }: LeaderboardP
                                         {entry.name}
                                         {isMe && <span className="text-xs bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full flex-shrink-0">Meg</span>}
                                     </div>
-                                    <div className="text-sm text-gray-500">
-                                        {entry.total} {unit}
+
+                                    {/* Stats Row */}
+                                    <div className="flex items-center gap-2 text-sm mt-0.5">
+                                        <span className="font-medium text-gray-900">{entry.total.toLocaleString()}</span>
+                                        {goal && (
+                                            <span className="text-gray-400">/ {goal.toLocaleString()} {unit}</span>
+                                        )}
                                     </div>
                                 </div>
 
@@ -80,19 +89,26 @@ export const Leaderboard = ({ entries, unit, currentUserId, goal }: LeaderboardP
                                 )}
                             </div>
 
-                            {/* Progress Bar */}
+                            {/* Progress Bar & Status */}
                             {goal && (
-                                <div className="mt-3 w-full pl-12">
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-xs text-gray-400">{Math.round(progress)}%</span>
-                                        <span className="text-xs text-gray-300">{goal} {unit}</span>
-                                    </div>
+                                <div className="mt-3 w-full pl-12 space-y-1">
                                     <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
                                         <div
                                             className={`h-full rounded-full transition-all duration-500 ${isMe ? 'bg-indigo-500' : 'bg-green-500'}`}
                                             style={{ width: `${progress}%` }}
                                         />
                                     </div>
+
+                                    {/* Ahead/Behind Indicator */}
+                                    {expectedTotal && (
+                                        <div className={`text-xs font-medium flex items-center gap-1 ${isAhead ? 'text-green-600' : 'text-orange-600'}`}>
+                                            {isAhead ? (
+                                                <>🚀 +{Math.round(diff)} foran</>
+                                            ) : (
+                                                <>🐢 -{Math.round(Math.abs(diff))} bak</>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

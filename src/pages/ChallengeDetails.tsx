@@ -385,7 +385,13 @@ export const ChallengeDetails = () => {
                     )}
                 </div>
 
-                <Leaderboard entries={leaderboardData} unit={challenge.unit} currentUserId={user?.id} goal={challenge.goal} />
+                <Leaderboard
+                    entries={leaderboardData}
+                    unit={challenge.unit}
+                    currentUserId={user?.id}
+                    goal={challenge.goal}
+                    expectedTotal={challenge.goal * expectedRatio}
+                />
 
                 {/* Recent Activity Section */}
                 <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
