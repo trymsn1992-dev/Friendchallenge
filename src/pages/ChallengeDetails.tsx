@@ -8,6 +8,8 @@ import { Leaderboard } from '../components/Leaderboard'
 import { ArrowLeft, Share2, Trash } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 
+import { format } from 'date-fns'
+
 // Types
 type Challenge = {
     id: string
@@ -25,6 +27,7 @@ type Log = {
     user_id: string
     user_name: string
     amount: number
+    created_at?: string
 }
 
 export const ChallengeDetails = () => {
@@ -99,7 +102,12 @@ export const ChallengeDetails = () => {
 
     const fetchLogs = async () => {
         if (!id) return
-        const { data } = await supabase.from('progress_logs').select('user_id, user_name, amount').eq('challenge_id', id)
+        const { data } = await supabase
+            .from('progress_logs')
+            .select('user_id, user_name, amount, created_at')
+            .eq('challenge_id', id)
+            .order('created_at', { ascending: false })
+
         if (data) setLogs(data)
     }
 
@@ -320,6 +328,48 @@ export const ChallengeDetails = () => {
                 </div>
 
                 <Leaderboard entries={leaderboardData} unit={challenge.unit} currentUserId={user?.id} />
+
+                {/* Recent Activity Section */}
+                <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">Nylig aktivitet</h3>
+
+                    {logs.length === 0 ? (
+                        <p className="text-gray-500 text-sm">Ingen aktivitet ennå.</p>
+                    ) : (
+                        <div className="space-y-4">
+                            {logs.map((log, index) => {
+                                const profile = avatars[log.user_id]
+                                return (
+                                    <div key={index} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
+                                                {profile?.url ? (
+                                                    <img src={profile.url} alt="User" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-xs text-gray-400 font-bold">
+                                                        {profile?.name?.charAt(0) || log.user_name?.charAt(0) || '?'}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    {profile?.name || log.user_name || 'Anonym'}
+                                                </p>
+                                                <p className="text-xs text-gray-400">
+                                                    {log.created_at ? format(new Date(log.created_at), 'd. MMM HH:mm') : 'Nylig'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-indigo-600 font-bold">+{log.amount}</span>
+                                            <span className="text-xs text-gray-400 ml-1">{challenge.unit}</span>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Strava Modal */}
