@@ -328,27 +328,26 @@ export const ChallengeDetails = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-start">
-                <Link to="/" className="p-2 rounded-full hover:bg-gray-100 transition-colors">
-                    <ArrowLeft size={24} className="text-gray-500" />
+            <div className="flex justify-between items-center">
+                <Link to="/" className="p-2 -ml-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors">
+                    <ArrowLeft size={24} />
                 </Link>
-                <div className="flex gap-2">
+                <div className="flex gap-1">
                     {user && challenge && user.id === challenge.creator_id && (
                         <button
                             onClick={handleDelete}
-                            className="flex items-center gap-2 text-red-600 bg-red-50 px-4 py-2 rounded-full font-medium hover:bg-red-100 transition-colors"
+                            className="p-2 rounded-full text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                             title="Slett utfordring"
                         >
-                            <Trash size={18} />
-                            <span className="text-sm hidden sm:inline">Slett</span>
+                            <Trash size={20} />
                         </button>
                     )}
                     <button
                         onClick={handleShare}
-                        className="flex items-center gap-2 text-indigo-600 bg-indigo-50 px-4 py-2 rounded-full font-medium hover:bg-indigo-100 transition-colors"
+                        className="p-2 rounded-full text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                        title="Del utfordring"
                     >
-                        <Share2 size={18} />
-                        <span className="text-sm">Del</span>
+                        <Share2 size={20} />
                     </button>
                 </div>
             </div>
@@ -359,10 +358,11 @@ export const ChallengeDetails = () => {
                 </div>
             )}
 
-
-            <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">{challenge.title}</h1>
-                <p className="text-gray-500 max-w-xl mx-auto">{challenge.description}</p>
+            <div className="mb-8">
+                <h1 className="text-2xl font-bold text-gray-900">{challenge.title}</h1>
+                {challenge.description && (
+                    <p className="text-gray-500 mt-1 text-sm">{challenge.description}</p>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
