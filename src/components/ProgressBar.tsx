@@ -5,9 +5,11 @@ interface ProgressBarProps {
     goal: number
     unit: string
     expectedTotal?: number
+    title?: string
+    description?: string
 }
 
-export const ProgressBar = ({ total, goal, unit, expectedTotal }: ProgressBarProps) => {
+export const ProgressBar = ({ total, goal, unit, expectedTotal, title, description }: ProgressBarProps) => {
     const percentage = Math.min((total / goal) * 100, 100)
     const expectedPercentage = expectedTotal ? Math.min((expectedTotal / goal) * 100, 100) : 0
 
@@ -16,10 +18,19 @@ export const ProgressBar = ({ total, goal, unit, expectedTotal }: ProgressBarPro
 
     return (
         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+            {title && (
+                <div className="mb-4">
+                    <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+                    {description && (
+                        <p className="text-gray-500 text-sm mt-1">{description}</p>
+                    )}
+                </div>
+            )}
+
             <div className="flex justify-between items-end mb-2">
                 <div className="z-10 relative">
-                    <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wide">Felles Fremgang</h3>
-                    <div className="text-3xl font-bold text-gray-900 mt-1">
+                    <h3 className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">Felles Fremgang</h3>
+                    <div className="text-3xl font-bold text-gray-900">
                         {total.toLocaleString()} <span className="text-lg text-gray-400 font-normal">/ {goal.toLocaleString()} {unit}</span>
                     </div>
                 </div>

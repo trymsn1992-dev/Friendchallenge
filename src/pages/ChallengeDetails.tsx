@@ -358,13 +358,6 @@ export const ChallengeDetails = () => {
                 </div>
             )}
 
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900">{challenge.title}</h1>
-                {challenge.description && (
-                    <p className="text-gray-500 mt-1 text-sm">{challenge.description}</p>
-                )}
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-6">
                     <ProgressBar
@@ -372,6 +365,8 @@ export const ChallengeDetails = () => {
                         goal={groupGoal}
                         unit={challenge.unit}
                         expectedTotal={expectedTotal}
+                        title={challenge.title}
+                        description={challenge.description || undefined}
                     />
 
                     {user ? (
