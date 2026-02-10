@@ -11,6 +11,7 @@ interface LeaderboardProps {
     entries: LeaderboardEntry[]
     unit: string
     currentUserId?: string
+    goal?: number
 }
 
 export const Leaderboard = ({ entries, unit, currentUserId }: LeaderboardProps) => {
@@ -27,58 +28,73 @@ export const Leaderboard = ({ entries, unit, currentUserId }: LeaderboardProps) 
                 {sorted.map((entry, index) => {
                     const isTop3 = index < 3
                     const isMe = entry.userId === currentUserId
+                    const progress = goal ? Math.min((entry.total / goal) * 100, 100) : 0
 
                     return (
                         <div
                             key={entry.userId}
-                            className={`flex items-center p-4 rounded-2xl transition-all ${isMe ? 'bg-indigo-50 border border-indigo-100 ring-2 ring-indigo-200' : 'bg-gray-50 border border-transparent'
+                            className={`flex flex-col p-4 rounded-2xl transition-all ${isMe ? 'bg-indigo-50 border border-indigo-100 ring-2 ring-indigo-200' : 'bg-gray-50 border border-transparent'
                                 }`}
                         >
-                            <div className={`
-                w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm mr-4
-                ${index === 0 ? 'bg-yellow-400 text-white shadow-md' :
-                                    index === 1 ? 'bg-gray-300 text-white shadow-md' :
-                                        index === 2 ? 'bg-amber-600 text-white shadow-md' :
-                                            'bg-gray-200 text-gray-500'}
-              `}>
-                                {index + 1}
-                            </div>
+                            <div className="flex items-center w-full">
+                                <div className={`
+                    w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm mr-4 flex-shrink-0
+                    ${index === 0 ? 'bg-yellow-400 text-white shadow-md' :
+                                        index === 1 ? 'bg-gray-300 text-white shadow-md' :
+                                            index === 2 ? 'bg-amber-600 text-white shadow-md' :
+                                                'bg-gray-200 text-gray-500'}
+                  `}>
+                                    {index + 1}
+                                </div>
 
+                                <div className="mr-3 flex-shrink-0">
+                                    {entry.avatar_url ? (
+                                        <img
+                                            src={entry.avatar_url}
+                                            alt={entry.name}
+                                            className="w-10 h-10 rounded-full object-cover border border-gray-100"
+                                        />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-400">
+                                            <UserIcon size={20} />
+                                        </div>
+                                    )}
+                                </div>
 
-
-                            <div className="mr-3 flex-shrink-0">
-                                {entry.avatar_url ? (
-                                    <img
-                                        src={entry.avatar_url}
-                                        alt={entry.name}
-                                        className="w-10 h-10 rounded-full object-cover border border-gray-100"
-                                    />
-                                ) : (
-                                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-400">
-                                        <UserIcon size={20} />
+                                <div className="flex-grow min-w-0">
+                                    <div className="font-bold text-gray-900 flex items-center gap-2 truncate">
+                                        {entry.name}
+                                        {isMe && <span className="text-xs bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full flex-shrink-0">Meg</span>}
                                     </div>
-                                )}
-                            </div>
-
-                            <div className="flex-grow">
-                                <div className="font-bold text-gray-900 flex items-center gap-2">
-                                    {entry.name}
-                                    {isMe && <span className="text-xs bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full">Meg</span>}
+                                    <div className="text-sm text-gray-500">
+                                        {entry.total} {unit}
+                                    </div>
                                 </div>
-                                <div className="text-sm text-gray-500">
-                                    {entry.total} {unit}
-                                </div>
-                            </div>
 
-                            {
-                                isTop3 && (
-                                    <div className="text-2xl animate-pulse">
+                                {isTop3 && (
+                                    <div className="text-2xl animate-pulse ml-2 flex-shrink-0">
                                         {index === 0 && '👑'}
                                         {index === 1 && '🥈'}
                                         {index === 2 && '🥉'}
                                     </div>
-                                )
-                            }
+                                )}
+                            </div>
+
+                            {/* Progress Bar */}
+                            {goal && (
+                                <div className="mt-3 w-full pl-12">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-xs text-gray-400">{Math.round(progress)}%</span>
+                                        <span className="text-xs text-gray-300">{goal} {unit}</span>
+                                    </div>
+                                    <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full transition-all duration-500 ${isMe ? 'bg-indigo-500' : 'bg-green-500'}`}
+                                            style={{ width: `${progress}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )
                 })}
