@@ -108,6 +108,26 @@ export type Database = {
                     created_at?: string
                 }
             }
+            likes: {
+                Row: {
+                    id: string
+                    log_id: string
+                    user_id: string
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    log_id: string
+                    user_id: string
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    log_id?: string
+                    user_id?: string
+                    created_at?: string
+                }
+            }
         }
     }
 }

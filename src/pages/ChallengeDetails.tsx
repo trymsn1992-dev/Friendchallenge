@@ -24,10 +24,12 @@ type Challenge = {
 }
 
 type Log = {
+    id: string
     user_id: string
     user_name: string
     amount: number
     created_at?: string
+    likes_count?: number
 }
 
 export const ChallengeDetails = () => {
@@ -102,13 +104,76 @@ export const ChallengeDetails = () => {
 
     const fetchLogs = async () => {
         if (!id) return
-        const { data } = await supabase
+
+        // Fetch logs
+        const { data: logsData } = await supabase
             .from('progress_logs')
-            .select('user_id, user_name, amount, created_at')
+            .select('id, user_id, user_name, amount, created_at')
             .eq('challenge_id', id)
             .order('created_at', { ascending: false })
 
-        if (data) setLogs(data)
+        if (logsData) {
+            // Fetch likes count for these logs
+            const logIds = logsData.map(l => l.id)
+
+            if (logIds.length > 0) {
+                // Get all likes for these logs
+                const { data: likesData } = await supabase
+                    .from('likes')
+                    .select('log_id, user_id')
+                    .in('log_id', logIds)
+
+                // Map likes to logs
+                const logsWithLikes = logsData.map(log => {
+                    const likes = likesData?.filter(l => l.log_id === log.id) || []
+                    return {
+                        ...log,
+                        likes_count: likes.length
+                    }
+                })
+
+                setLogs(logsWithLikes)
+
+                // Set user likes
+                if (user) {
+                    const myLikes = new Set(likesData?.filter(l => l.user_id === user.id).map(l => l.log_id))
+                    setUserLikes(myLikes)
+                }
+            } else {
+                setLogs(logsData.map(l => ({ ...l, likes_count: 0 })))
+            }
+        }
+    }
+
+    const handleLike = async (logId: string, isLiked: boolean) => {
+        if (!user) return
+
+        // Optimistic update
+        setLogs(prev => prev.map(log => {
+            if (log.id === logId) {
+                return {
+                    ...log,
+                    likes_count: (log.likes_count || 0) + (isLiked ? -1 : 1)
+                }
+            }
+            return log
+        }))
+
+        setUserLikes(prev => {
+            const next = new Set(prev)
+            if (isLiked) next.delete(logId)
+            else next.add(logId)
+            return next
+        })
+
+        if (isLiked) {
+            await supabase.from('likes').delete().match({ log_id: logId, user_id: user.id })
+        } else {
+            await supabase.from('likes').insert({ log_id: logId, user_id: user.id })
+        }
+
+        // Optional: refetch to be sure
+        // fetchLogs() 
     }
 
     const handleLog = async (amount: number) => {
@@ -339,8 +404,9 @@ export const ChallengeDetails = () => {
                         <div className="space-y-4">
                             {logs.map((log, index) => {
                                 const profile = avatars[log.user_id]
+                                const isLiked = userLikes.has(log.id)
                                 return (
-                                    <div key={index} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                                    <div key={log.id || index} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
                                                 {profile?.url ? (
@@ -360,9 +426,18 @@ export const ChallengeDetails = () => {
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <span className="text-indigo-600 font-bold">+{log.amount}</span>
-                                            <span className="text-xs text-gray-400 ml-1">{challenge.unit}</span>
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-right">
+                                                <span className="text-indigo-600 font-bold">+{log.amount}</span>
+                                                <span className="text-xs text-gray-400 ml-1">{challenge.unit}</span>
+                                            </div>
+                                            <button
+                                                onClick={() => handleLike(log.id, isLiked)}
+                                                className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full transition-colors ${isLiked ? 'bg-pink-50 text-pink-600' : 'text-gray-400 hover:bg-gray-50'}`}
+                                            >
+                                                <span>{isLiked ? '❤️' : '🤍'}</span>
+                                                <span>{log.likes_count || 0}</span>
+                                            </button>
                                         </div>
                                     </div>
                                 )
