@@ -372,15 +372,7 @@ export const ChallengeDetails = () => {
                         <div className="space-y-6">
                             <QuickLog onLog={handleLog} unit={challenge.unit} loading={false} />
 
-                            {/* Strava Import Section */}
-                            <div className="pt-4 border-t border-gray-100">
-                                <button
-                                    onClick={() => setShowStravaModal(true)}
-                                    className="w-full bg-[#FC4C02] bg-opacity-10 text-[#FC4C02] font-semibold py-3 px-4 rounded-2xl hover:bg-opacity-20 transition-all flex items-center justify-center gap-2"
-                                >
-                                    <span>🏃‍♂️</span> Hent fra Strava
-                                </button>
-                            </div>
+
                         </div>
                     ) : (
                         <div className="bg-indigo-50 p-6 rounded-3xl text-center">
