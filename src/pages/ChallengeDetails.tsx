@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { QuickLog } from '../components/QuickLog'
 import { ProgressBar } from '../components/ProgressBar'
 import { Leaderboard } from '../components/Leaderboard'
-import { ArrowLeft, Share2, Trash } from 'lucide-react'
+import { ArrowLeft, Share2, Trash, Heart } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { format } from 'date-fns'
@@ -425,9 +425,9 @@ export const ChallengeDetails = () => {
                                             </div>
                                             <button
                                                 onClick={() => handleLike(log.id, isLiked)}
-                                                className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full transition-colors ${isLiked ? 'bg-pink-50 text-pink-600' : 'text-gray-400 hover:bg-gray-50'}`}
+                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-xs font-medium ${isLiked ? 'bg-pink-50 text-pink-600' : 'text-gray-400 hover:bg-gray-50'}`}
                                             >
-                                                <span>{isLiked ? '❤️' : '🤍'}</span>
+                                                <Heart size={14} className={isLiked ? 'fill-current' : ''} />
                                                 <span>{log.likes_count || 0}</span>
                                             </button>
                                         </div>
