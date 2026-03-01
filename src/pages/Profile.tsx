@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { User, Camera, Loader2, Save } from 'lucide-react'
+import { User, Camera, Loader2, Save, LogOut, ArrowLeft } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
 
 export const Profile = () => {
     const { user } = useAuth()
+    const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
     const [uploading, setUploading] = useState(false)
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
@@ -182,7 +184,14 @@ export const Profile = () => {
     }
 
     return (
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md mx-auto relative">
+            {/* Floating Back Button */}
+            <div className="fixed top-4 left-4 z-50">
+                <Link to="/" className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-600 hover:scale-105 transition-transform overflow-hidden border border-gray-100">
+                    <ArrowLeft size={24} />
+                </Link>
+            </div>
+
             <h1 className="text-3xl font-bold text-gray-900 mb-8">Min Profil</h1>
 
             <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
@@ -272,6 +281,19 @@ export const Profile = () => {
                         </button>
                     )}
                 </div>
+            </div>
+
+            <div className="mt-8 pt-8">
+                <button
+                    onClick={async () => {
+                        await supabase.auth.signOut()
+                        navigate('/login')
+                    }}
+                    className="flex w-full items-center justify-center gap-2 py-3 px-4 rounded-xl text-red-600 font-bold bg-white border border-red-100 hover:bg-red-50 hover:border-red-200 transition-colors shadow-sm"
+                >
+                    <LogOut size={20} />
+                    Logg ut
+                </button>
             </div>
         </div>
 

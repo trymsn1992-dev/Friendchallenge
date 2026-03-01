@@ -33,7 +33,11 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="challenge/:id" element={<ChallengeDetails />} />
-            <Route path="profile" element={<Profile />} />
+            <Route path="profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
           </Route>
         </Routes>
       </BrowserRouter>

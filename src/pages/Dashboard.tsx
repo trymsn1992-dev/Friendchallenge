@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Database } from '../types/database.types'
-import { Calendar, Trash } from 'lucide-react'
+import { Calendar, Trash, Share2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -86,18 +86,27 @@ export const Dashboard = () => {
                         const participants = challenge.participants || []
                         const displayParticipants = participants.slice(0, 3)
 
+                        const handleShare = (e: React.MouseEvent) => {
+                            e.preventDefault() // Prevent navigation to challenge details
+                            const url = `${window.location.origin}/challenge/${challenge.id}`
+                            if (navigator.share) {
+                                navigator.share({
+                                    title: challenge.title,
+                                    text: `Bli med på utfordringen: ${challenge.title}`,
+                                    url: url,
+                                }).catch((error) => console.log('Error sharing', error))
+                            } else {
+                                navigator.clipboard.writeText(url)
+                                alert('Link kopiert til utklippstavlen!')
+                            }
+                        }
+
                         return (
                             <div key={challenge.id} className="relative group">
                                 <Link
                                     to={`/challenge/${challenge.id}`}
-                                    className="block h-full bg-white rounded-3xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col"
+                                    className="block h-full bg-white rounded-3xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col pt-12"
                                 >
-                                    <div className="mb-4 flex justify-between items-start">
-                                        <span className="inline-block px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold uppercase tracking-wide">
-                                            {challenge.unit}
-                                        </span>
-                                    </div>
-
                                     <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
                                         {challenge.title}
                                     </h3>
@@ -131,15 +140,30 @@ export const Dashboard = () => {
                                     </div>
                                 </Link>
 
-                                {user && user.id === challenge.creator_id && (
+                                <div className="absolute top-4 right-4 flex gap-2">
                                     <button
-                                        onClick={(e) => handleDelete(e, challenge.id)}
-                                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
-                                        title="Slett utfordring"
+                                        onClick={handleShare}
+                                        className="p-2 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors shadow-sm"
+                                        title="Del utfordring"
                                     >
-                                        <Trash size={18} />
+                                        <Share2 size={16} />
                                     </button>
-                                )}
+
+                                    {user && user.id === challenge.creator_id && (
+                                        <button
+                                            onClick={(e) => handleDelete(e, challenge.id)}
+                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 bg-gray-50 rounded-full transition-colors shadow-sm"
+                                            title="Slett utfordring"
+                                        >
+                                            <Trash size={16} />
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="absolute top-4 left-4">
+                                    <span className="inline-block px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold uppercase tracking-wide">
+                                        {challenge.unit}
+                                    </span>
+                                </div>
                             </div>
                         )
                     })}

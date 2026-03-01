@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { generateChallengeDescription } from '../lib/gemini'
 import { useAuth } from '../contexts/AuthContext'
-import { Sparkles, ArrowRight } from 'lucide-react'
+import { Sparkles, ArrowRight, Zap, ArrowLeft } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 export const CreateChallenge = () => {
     const navigate = useNavigate()
     const { user } = useAuth()
+
+    const [isOpmMode, setIsOpmMode] = useState(false)
 
     const [formData, setFormData] = useState({
         title: '',
@@ -17,6 +20,13 @@ export const CreateChallenge = () => {
         start_date: new Date().toISOString().split('T')[0],
         end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     })
+
+    const [opmExercises, setOpmExercises] = useState([
+        { id: 'pushups', name: 'Pushups', daily_goal: 100, unit: 'reps', active: true },
+        { id: 'situps', name: 'Situps', daily_goal: 100, unit: 'reps', active: true },
+        { id: 'squats', name: 'Squats', daily_goal: 100, unit: 'reps', active: true },
+        { id: 'running', name: 'Løping', daily_goal: 10, unit: 'km', active: true },
+    ])
 
     const [generating, setGenerating] = useState(false)
     const [submitting, setSubmitting] = useState(false)
@@ -29,51 +39,136 @@ export const CreateChallenge = () => {
         setGenerating(false)
     }
 
+    const toggleOpmMode = () => {
+        setIsOpmMode(!isOpmMode)
+        if (!isOpmMode) {
+            setFormData(prev => ({
+                ...prev,
+                title: prev.title || 'One Punch Man Challenge',
+                goal: 1, // Placeholder for DB constraint
+                unit: 'dager', // Placeholder
+            }))
+        }
+    }
+
+    const toggleExercise = (id: string) => {
+        setOpmExercises(prev => prev.map(ex =>
+            ex.id === id ? { ...ex, active: !ex.active } : ex
+        ))
+    }
+
+    const updateExerciseGoal = (id: string, goal: number) => {
+        setOpmExercises(prev => prev.map(ex =>
+            ex.id === id ? { ...ex, daily_goal: goal } : ex
+        ))
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!user) return
 
+        if (isOpmMode && !opmExercises.some(ex => ex.active)) {
+            alert("Du må velge minst én øvelse for One Punch Man modusen.")
+            return
+        }
+
         setSubmitting(true)
 
-        const { data, error } = await supabase
+        // 1. Create the challenge
+        const { data: challengeData, error: challengeError } = await supabase
             .from('challenges')
             // @ts-ignore
             .insert({
                 title: formData.title,
                 description: formData.description,
-                goal: Number(formData.goal),
-                unit: formData.unit,
+                goal: isOpmMode ? 1 : Number(formData.goal), // Dummy value for OPM
+                unit: isOpmMode ? 'dager' : formData.unit,
                 start_date: formData.start_date,
                 end_date: formData.end_date,
                 creator_id: user.id,
-                creator_name: user.email?.split('@')[0] || 'Anonym', // Fallback name
-                participants: [user.id] // Creator is a participant
+                creator_name: user.email?.split('@')[0] || 'Anonym',
+                participants: [user.id],
+                is_opm: isOpmMode
             })
             .select()
             .single()
 
-        setSubmitting(false)
-
-        if (error) {
-            alert('Kunne ikke opprette utfordring: ' + error.message)
-        } else if (data) {
-            // @ts-ignore
-            navigate(`/challenge/${data.id}`)
+        if (challengeError) {
+            setSubmitting(false)
+            alert('Kunne ikke opprette utfordring: ' + challengeError.message)
+            return
         }
+
+        // 2. If OPM mode, save the active exercises
+        // @ts-ignore
+        const newChallengeId = challengeData?.id
+
+        if (isOpmMode && newChallengeId) {
+            const activeExercises = opmExercises.filter(ex => ex.active).map(ex => ({
+                challenge_id: newChallengeId,
+                name: ex.name,
+                daily_goal: ex.daily_goal,
+                unit: ex.unit
+            }))
+
+            const { error: exerciseError } = await supabase
+                .from('challenge_exercises')
+                // @ts-ignore
+                .insert(activeExercises)
+
+            if (exerciseError) {
+                console.error("Error saving exercises:", exerciseError)
+                // Continue anyway, but might be inconsistent
+            }
+        }
+
+        setSubmitting(false)
+        navigate(`/challenge/${newChallengeId}`)
     }
 
     return (
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto relative">
+            {/* Floating Back Button */}
+            <div className="fixed top-4 left-4 z-50">
+                <Link to="/" className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-600 hover:scale-105 transition-transform overflow-hidden border border-gray-100">
+                    <ArrowLeft size={24} />
+                </Link>
+            </div>
+
             <h1 className="text-3xl font-bold text-gray-900 mb-8">Ny Utfordring</h1>
 
             <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 space-y-6">
+
+                {/* OPM Mode Toggle */}
+                <button
+                    type="button"
+                    onClick={toggleOpmMode}
+                    className={`w-full p-4 rounded-xl border-2 flex items-center justify-between transition-all ${isOpmMode
+                        ? 'border-yellow-400 bg-yellow-50 text-yellow-800'
+                        : 'border-gray-200 hover:border-indigo-200 text-gray-600'
+                        }`}
+                >
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${isOpmMode ? 'bg-yellow-400 text-white' : 'bg-gray-100'}`}>
+                            <Zap size={20} />
+                        </div>
+                        <div className="text-left">
+                            <h3 className="font-bold">One Punch Man Modus</h3>
+                            <p className="text-sm opacity-80">Saitama's daglige treningsprogram (Flere øvelser)</p>
+                        </div>
+                    </div>
+                    <div className={`w-12 h-6 rounded-full p-1 transition-colors ${isOpmMode ? 'bg-yellow-400' : 'bg-gray-300'}`}>
+                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isOpmMode ? 'translate-x-6' : 'translate-x-0'}`} />
+                    </div>
+                </button>
+
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Tittel</label>
                     <input
                         type="text"
                         required
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all outline-none"
-                        placeholder="F.eks. 2000 Pushups i Februar"
+                        placeholder={isOpmMode ? "One Punch Man Utfordringen" : "F.eks. 2000 Pushups i Februar"}
                         value={formData.title}
                         onChange={e => setFormData({ ...formData, title: e.target.value })}
                     />
@@ -101,30 +196,67 @@ export const CreateChallenge = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Mål (Antall)</label>
-                        <input
-                            type="number"
-                            required
-                            min="1"
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all outline-none"
-                            value={formData.goal}
-                            onChange={e => setFormData({ ...formData, goal: Number(e.target.value) })}
-                        />
+                {isOpmMode ? (
+                    <div className="space-y-4 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                        <h3 className="font-bold text-gray-900 mb-2">Daglige Øvelser</h3>
+                        <p className="text-sm text-gray-500 mb-4">Velg hvilke øvelser som skal være med og juster dagsmålet (standard er godkjent av Saitama).</p>
+
+                        {opmExercises.map((ex) => (
+                            <div key={ex.id} className="flex items-center gap-4 bg-white p-3 rounded-xl border border-gray-200">
+                                <label className="relative flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={ex.active}
+                                        onChange={() => toggleExercise(ex.id)}
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                                <span className={`flex-grow font-medium ${ex.active ? 'text-gray-900' : 'text-gray-400'}`}>
+                                    {ex.name}
+                                </span>
+                                {ex.active && (
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={ex.daily_goal}
+                                            onChange={(e) => updateExerciseGoal(ex.id, Number(e.target.value))}
+                                            className="w-20 px-2 py-1 text-right rounded border border-gray-300 focus:border-indigo-500 outline-none"
+                                        />
+                                        <span className="text-gray-500 text-sm w-10">{ex.unit}</span>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Enhet</label>
-                        <input
-                            type="text"
-                            required
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all outline-none"
-                            placeholder="pushups, km, sider"
-                            value={formData.unit}
-                            onChange={e => setFormData({ ...formData, unit: e.target.value })}
-                        />
+                ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Mål (Antall)</label>
+                            <input
+                                type="number"
+                                required
+                                min="1"
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all outline-none"
+                                value={formData.goal}
+                                onChange={e => setFormData({ ...formData, goal: Number(e.target.value) })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Enhet</label>
+                            <input
+                                type="text"
+                                required
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all outline-none"
+                                placeholder="pushups, km, sider"
+                                value={formData.unit}
+                                onChange={e => setFormData({ ...formData, unit: e.target.value })}
+                            />
+                        </div>
                     </div>
-                </div>
+                )}
+
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>

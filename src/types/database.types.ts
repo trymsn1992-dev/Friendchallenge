@@ -44,6 +44,29 @@ export type Database = {
                     strava_expires_at?: number | null
                 }
             }
+            challenge_exercises: {
+                Row: {
+                    id: string
+                    challenge_id: string
+                    name: string
+                    daily_goal: number
+                    unit: string
+                }
+                Insert: {
+                    id?: string
+                    challenge_id: string
+                    name: string
+                    daily_goal: number
+                    unit: string
+                }
+                Update: {
+                    id?: string
+                    challenge_id?: string
+                    name?: string
+                    daily_goal?: number
+                    unit?: string
+                }
+            }
             challenges: {
                 Row: {
                     id: string
@@ -56,6 +79,7 @@ export type Database = {
                     creator_id: string
                     creator_name: string | null
                     participants: string[] | null
+                    is_opm: boolean | null
                 }
                 Insert: {
                     id?: string
@@ -68,6 +92,7 @@ export type Database = {
                     creator_id: string
                     creator_name?: string | null
                     participants?: string[] | null
+                    is_opm?: boolean | null
                 }
                 Update: {
                     id?: string
@@ -80,6 +105,7 @@ export type Database = {
                     creator_id?: string
                     creator_name?: string | null
                     participants?: string[] | null
+                    is_opm?: boolean | null
                 }
             }
             progress_logs: {
@@ -90,6 +116,7 @@ export type Database = {
                     user_name: string | null
                     amount: number
                     created_at: string
+                    exercise_id: string | null
                 }
                 Insert: {
                     id?: string
@@ -98,6 +125,7 @@ export type Database = {
                     user_name?: string | null
                     amount: number
                     created_at?: string
+                    exercise_id?: string | null
                 }
                 Update: {
                     id?: string
@@ -106,6 +134,7 @@ export type Database = {
                     user_name?: string | null
                     amount?: number
                     created_at?: string
+                    exercise_id?: string | null
                 }
             }
             likes: {
