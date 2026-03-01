@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { generateChallengeDescription } from '../lib/gemini'
 import { useAuth } from '../contexts/AuthContext'
-import { Sparkles, ArrowRight, Zap, ArrowLeft } from 'lucide-react'
+import { Sparkles, ArrowRight, Zap, ArrowLeft, Image as ImageIcon, Upload, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export const CreateChallenge = () => {
@@ -30,6 +30,25 @@ export const CreateChallenge = () => {
 
     const [generating, setGenerating] = useState(false)
     const [submitting, setSubmitting] = useState(false)
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string | null>(null)
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setImageFile(file)
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
+    const removeImage = () => {
+        setImageFile(null)
+        setImagePreview(null)
+    }
 
     const handleGenerateDescription = async () => {
         if (!formData.title) return
@@ -74,6 +93,33 @@ export const CreateChallenge = () => {
 
         setSubmitting(true)
 
+        let uploadedImageUrl = null
+
+        // 0. Upload image if exists
+        if (imageFile) {
+            const fileExt = imageFile.name.split('.').pop()
+            const fileName = `${Math.random()}.${fileExt}`
+            const filePath = `challenge-banners/${fileName}`
+
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('challenge-images')
+                .upload(filePath, imageFile)
+
+            if (uploadError) {
+                console.error('Error uploading image:', uploadError)
+                alert('Kunne ikke laste opp bilde: ' + uploadError.message)
+                // Continue without image or stop? Let's stop to be safe
+                setSubmitting(false)
+                return
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('challenge-images')
+                .getPublicUrl(filePath)
+
+            uploadedImageUrl = publicUrl
+        }
+
         // 1. Create the challenge
         const { data: challengeData, error: challengeError } = await supabase
             .from('challenges')
@@ -88,7 +134,8 @@ export const CreateChallenge = () => {
                 creator_id: user.id,
                 creator_name: user.email?.split('@')[0] || 'Anonym',
                 participants: [user.id],
-                is_opm: isOpmMode
+                is_opm: isOpmMode,
+                image_url: uploadedImageUrl
             })
             .select()
             .single()
@@ -161,6 +208,39 @@ export const CreateChallenge = () => {
                         <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isOpmMode ? 'translate-x-6' : 'translate-x-0'}`} />
                     </div>
                 </button>
+
+                {/* Image Upload Area */}
+                <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Bannerbilde (Valgfritt)</label>
+
+                    {imagePreview ? (
+                        <div className="relative rounded-2xl overflow-hidden aspect-video border border-gray-100 shadow-sm group">
+                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={removeImage}
+                                    className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <label className="flex flex-col items-center justify-center aspect-video w-full rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-indigo-300 transition-all cursor-pointer group">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <div className="p-3 rounded-full bg-white shadow-sm mb-3 text-gray-400 group-hover:text-indigo-500 transition-colors">
+                                    <Upload size={24} />
+                                </div>
+                                <p className="text-sm text-gray-500">
+                                    <span className="font-bold text-indigo-600">Klikk for å laste opp</span> eller dra og slipp
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">PNG, JPG eller WEBP (Max 5MB)</p>
+                            </div>
+                            <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                        </label>
+                    )}
+                </div>
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Tittel</label>

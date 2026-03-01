@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Database } from '../types/database.types'
-import { Calendar, Trash, Share2, Plus } from 'lucide-react'
+import { Calendar, Trash, Share2, Plus, Image as ImageIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -112,37 +112,64 @@ export const Dashboard = () => {
                             <div key={challenge.id} className="relative group">
                                 <Link
                                     to={`/challenge/${challenge.id}`}
-                                    className="block h-full bg-white rounded-3xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col pt-12"
+                                    className="block h-full bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col group relative"
                                 >
-                                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
-                                        {challenge.title}
-                                    </h3>
-
-                                    <p className="text-gray-500 text-sm mb-6 flex-grow line-clamp-3">
-                                        {challenge.description}
-                                    </p>
-
-                                    <div className="flex items-center justify-between text-sm text-gray-400 mt-auto pt-4 border-t border-gray-50">
-                                        <div className="flex items-center gap-1">
-                                            <Calendar size={14} />
-                                            <span>{format(new Date(challenge.end_date), 'd. MMM')}</span>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex -space-x-2">
-                                                {displayParticipants.map(pid => (
-                                                    <div key={pid} className="w-6 h-6 rounded-full border-2 border-white overflow-hidden bg-gray-100">
-                                                        {avatars[pid] ? (
-                                                            <img src={avatars[pid]!} alt="Deltaker" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-[10px] text-indigo-600 font-bold">
-                                                                ?
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))}
+                                    {/* Card Header Image/Gradient */}
+                                    <div className="h-32 w-full relative overflow-hidden">
+                                        {challenge.image_url ? (
+                                            <>
+                                                <img
+                                                    src={challenge.image_url}
+                                                    alt={challenge.title}
+                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent" />
+                                            </>
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center">
+                                                <ImageIcon className="text-indigo-100" size={48} />
                                             </div>
-                                            <span>{participants.length} deltakere</span>
+                                        )}
+
+                                        {/* Unit Badge (Floating over image) */}
+                                        <div className="absolute top-4 left-4 z-10">
+                                            <span className="inline-block px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-indigo-700 text-[10px] font-black uppercase tracking-widest shadow-sm border border-indigo-50">
+                                                {challenge.unit}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6 pt-2 flex flex-col flex-grow">
+                                        <h3 className="text-xl font-black text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                                            {challenge.title}
+                                        </h3>
+
+                                        <p className="text-gray-500 text-sm mb-6 flex-grow line-clamp-2">
+                                            {challenge.description}
+                                        </p>
+
+                                        <div className="flex items-center justify-between text-[10px] font-bold text-gray-400 mt-auto pt-4 border-t border-gray-50 uppercase tracking-widest">
+                                            <div className="flex items-center gap-1.5">
+                                                <Calendar size={12} className="text-indigo-400" />
+                                                <span>{format(new Date(challenge.end_date), 'd. MMM')}</span>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex -space-x-1.5">
+                                                    {displayParticipants.map(pid => (
+                                                        <div key={pid} className="w-5 h-5 rounded-full border-2 border-white overflow-hidden bg-gray-100 shadow-sm">
+                                                            {avatars[pid] ? (
+                                                                <img src={avatars[pid]!} alt="Deltaker" className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-[8px] text-indigo-600 font-bold">
+                                                                    ?
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <span className="opacity-70">{participants.length} deltakere</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </Link>
@@ -166,16 +193,13 @@ export const Dashboard = () => {
                                         </button>
                                     )}
                                 </div>
-                                <div className="absolute top-4 left-4">
-                                    <span className="inline-block px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold uppercase tracking-wide">
-                                        {challenge.unit}
-                                    </span>
-                                </div>
                             </div>
-                        )
-                    })}
-                </div>
-            )}
+                            </div>
+            )
+            })}
         </div>
+    )
+}
+        </div >
     )
 }

@@ -439,17 +439,23 @@ export const ChallengeDetails = () => {
                         />
                     )}
 
-                    {challenge.is_opm && (
-                        <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl text-white shadow-lg relative overflow-hidden h-48 sm:h-64 flex flex-col justify-end p-6">
-                            <img src="/opm-banner.jpg?v=3" alt="One Punch Man Banner" className="absolute inset-0 w-full h-full object-cover z-0" />
+                    {(challenge.image_url || challenge.is_opm) ? (
+                        <div className="bg-indigo-600 rounded-3xl text-white shadow-lg relative overflow-hidden h-48 sm:h-64 flex flex-col justify-end p-6">
+                            <img
+                                src={challenge.image_url || "/opm-banner.jpg?v=3"}
+                                alt={challenge.title}
+                                className="absolute inset-0 w-full h-full object-cover z-0"
+                            />
                             <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/40 to-transparent z-10"></div>
-                            <h2 className="text-3xl font-black mb-2 relative z-10 italic tracking-tight uppercase text-white shadow-sm">
+                            <h2 className="text-3xl font-black mb-2 relative z-10 italic tracking-tight uppercase text-white shadow-sm line-clamp-1">
                                 {challenge.title}
                             </h2>
-                            <p className="text-yellow-100 font-medium relative z-10 line-clamp-2">
-                                {challenge.description || "100 Pushups. 100 Situps. 100 Squats. 10km Run. Every single day."}
+                            <p className="text-gray-100 font-medium relative z-10 line-clamp-2 text-sm opacity-90">
+                                {challenge.description || (challenge.is_opm ? "100 Pushups. 100 Situps. 100 Squats. 10km Run. Every single day." : "")}
                             </p>
                         </div>
+                    ) : (
+                        <div className="h-4 w-full" />
                     )}
 
                     {user ? (
