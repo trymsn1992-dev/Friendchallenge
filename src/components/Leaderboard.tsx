@@ -89,7 +89,7 @@ export const Leaderboard = ({
 
                                 <div className="flex-grow min-w-0">
                                     <div className="font-bold text-gray-900 flex items-center gap-2 truncate">
-                                        <span className="truncate">{entry.name}</span>
+                                        <span className="truncate text-sm">{entry.name}</span>
                                         {isMe && <span className="text-[10px] font-black bg-indigo-600 text-white px-2 py-0.5 rounded-full uppercase tracking-tighter">Meg</span>}
                                         {isTop3 && (
                                             <span className="text-lg flex-shrink-0">

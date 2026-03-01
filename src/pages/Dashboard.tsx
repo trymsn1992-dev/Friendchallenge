@@ -154,7 +154,7 @@ export const Dashboard = () => {
                                     </div>
 
                                     <div className="p-6 pt-2 flex flex-col flex-grow">
-                                        <h3 className="text-xl font-black text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                                        <h3 className="text-lg font-black text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">
                                             {challenge.title}
                                         </h3>
 
