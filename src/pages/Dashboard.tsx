@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Database } from '../types/database.types'
-import { Calendar, Trash, Share2 } from 'lucide-react'
+import { Calendar, Trash, Share2, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -69,8 +69,15 @@ export const Dashboard = () => {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">Utforsk Utfordringer</h1>
+            <div className="flex justify-between items-center mb-10">
+                <h1 className="text-4xl font-black text-gray-900 tracking-tight">Utforsk Utfordringer</h1>
+                <Link
+                    to="/create"
+                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                    <Plus size={20} strokeWidth={3} />
+                    <span>Lag utfordring</span>
+                </Link>
             </div>
 
             {challenges.length === 0 ? (
