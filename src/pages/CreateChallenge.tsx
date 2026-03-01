@@ -84,7 +84,10 @@ export const CreateChallenge = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!user) return
+        if (!user) {
+            alert("Du må være logget inn for å opprette en utfordring.")
+            return
+        }
 
         if (isOpmMode && !opmExercises.some(ex => ex.active)) {
             alert("Du må velge minst én øvelse for One Punch Man modusen.")
@@ -93,84 +96,83 @@ export const CreateChallenge = () => {
 
         setSubmitting(true)
 
-        let uploadedImageUrl = null
+        try {
+            let uploadedImageUrl = null
 
-        // 0. Upload image if exists
-        if (imageFile) {
-            const fileExt = imageFile.name.split('.').pop()
-            const fileName = `${Math.random()}.${fileExt}`
-            const filePath = `challenge-banners/${fileName}`
+            // 0. Upload image if exists
+            if (imageFile) {
+                const fileExt = imageFile.name.split('.').pop()
+                const fileName = `${Math.random()}.${fileExt}`
+                const filePath = `challenge-banners/${fileName}`
 
-            const { error: uploadError } = await supabase.storage
-                .from('challenge-images')
-                .upload(filePath, imageFile)
+                const { error: uploadError } = await supabase.storage
+                    .from('challenge-images')
+                    .upload(filePath, imageFile)
 
-            if (uploadError) {
-                console.error('Error uploading image:', uploadError)
-                alert('Kunne ikke laste opp bilde: ' + uploadError.message)
-                // Continue without image or stop? Let's stop to be safe
-                setSubmitting(false)
-                return
+                if (uploadError) {
+                    throw new Error('Kunne ikke laste opp bilde: ' + uploadError.message)
+                }
+
+                const { data } = supabase.storage
+                    .from('challenge-images')
+                    .getPublicUrl(filePath)
+
+                uploadedImageUrl = data.publicUrl
             }
 
-            const { data: { publicUrl } } = supabase.storage
-                .from('challenge-images')
-                .getPublicUrl(filePath)
-
-            uploadedImageUrl = publicUrl
-        }
-
-        // 1. Create the challenge
-        const { data: challengeData, error: challengeError } = await supabase
-            .from('challenges')
-            // @ts-ignore
-            .insert({
-                title: formData.title,
-                description: formData.description,
-                goal: isOpmMode ? 1 : Number(formData.goal), // Dummy value for OPM
-                unit: isOpmMode ? 'dager' : formData.unit,
-                start_date: formData.start_date,
-                end_date: formData.end_date,
-                creator_id: user.id,
-                creator_name: user.email?.split('@')[0] || 'Anonym',
-                participants: [user.id],
-                is_opm: isOpmMode,
-                image_url: uploadedImageUrl
-            })
-            .select()
-            .single()
-
-        if (challengeError) {
-            setSubmitting(false)
-            alert('Kunne ikke opprette utfordring: ' + challengeError.message)
-            return
-        }
-
-        // 2. If OPM mode, save the active exercises
-        // @ts-ignore
-        const newChallengeId = challengeData?.id
-
-        if (isOpmMode && newChallengeId) {
-            const activeExercises = opmExercises.filter(ex => ex.active).map(ex => ({
-                challenge_id: newChallengeId,
-                name: ex.name,
-                daily_goal: ex.daily_goal,
-                unit: ex.unit
-            }))
-
-            const { error: exerciseError } = await supabase
-                .from('challenge_exercises')
+            // 1. Create the challenge
+            const { data: challengeData, error: challengeError } = await supabase
+                .from('challenges')
                 // @ts-ignore
-                .insert(activeExercises)
+                .insert({
+                    title: formData.title,
+                    description: formData.description,
+                    goal: isOpmMode ? 1 : Number(formData.goal),
+                    unit: isOpmMode ? 'dager' : formData.unit,
+                    start_date: formData.start_date,
+                    end_date: formData.end_date,
+                    creator_id: user.id,
+                    creator_name: user.email?.split('@')[0] || 'Anonym',
+                    participants: [user.id],
+                    is_opm: isOpmMode,
+                    image_url: uploadedImageUrl
+                })
+                .select()
+                .single()
 
-            if (exerciseError) {
-                console.error("Error saving exercises:", exerciseError)
-                // Continue anyway, but might be inconsistent
+            if (challengeError) {
+                throw new Error('Kunne ikke opprette utfordring: ' + challengeError.message)
             }
-        }
 
-        setSubmitting(false)
-        navigate(`/challenge/${newChallengeId}`)
+            // 2. If OPM mode, save the active exercises
+            const newChallengeId = challengeData?.id
+
+            if (isOpmMode && newChallengeId) {
+                const activeExercises = opmExercises.filter(ex => ex.active).map(ex => ({
+                    challenge_id: newChallengeId,
+                    name: ex.name,
+                    daily_goal: ex.daily_goal,
+                    unit: ex.unit
+                }))
+
+                const { error: exerciseError } = await supabase
+                    .from('challenge_exercises')
+                    // @ts-ignore
+                    .insert(activeExercises)
+
+                if (exerciseError) {
+                    console.error("Error saving exercises:", exerciseError)
+                    // Continue anyway, but might be inconsistent
+                }
+            }
+
+            setSubmitting(false)
+            navigate(`/challenge/${newChallengeId}`)
+        } catch (error: any) {
+            console.error("Submit error:", error)
+            alert(error.message || "En ukjent feil oppstod.")
+            setSubmitting(false)
+        }
     }
 
     return (
