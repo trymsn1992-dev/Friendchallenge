@@ -80,6 +80,7 @@ export type Database = {
                     creator_name: string | null
                     participants: string[] | null
                     is_opm: boolean | null
+                    image_url: string | null
                 }
                 Insert: {
                     id?: string
@@ -93,6 +94,7 @@ export type Database = {
                     creator_name?: string | null
                     participants?: string[] | null
                     is_opm?: boolean | null
+                    image_url?: string | null
                 }
                 Update: {
                     id?: string
@@ -106,6 +108,7 @@ export type Database = {
                     creator_name?: string | null
                     participants?: string[] | null
                     is_opm?: boolean | null
+                    image_url?: string | null
                 }
             }
             progress_logs: {

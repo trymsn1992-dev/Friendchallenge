@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { generateChallengeDescription } from '../lib/gemini'
 import { useAuth } from '../contexts/AuthContext'
-import { Sparkles, ArrowRight, Zap, ArrowLeft, Image as ImageIcon, Upload, X } from 'lucide-react'
+import { Sparkles, ArrowRight, Zap, ArrowLeft, Upload, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export const CreateChallenge = () => {
@@ -101,7 +101,7 @@ export const CreateChallenge = () => {
             const fileName = `${Math.random()}.${fileExt}`
             const filePath = `challenge-banners/${fileName}`
 
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
                 .from('challenge-images')
                 .upload(filePath, imageFile)
 

@@ -7,30 +7,13 @@ import { ProgressBar } from '../components/ProgressBar'
 import { Leaderboard } from '../components/Leaderboard'
 import { ArrowLeft, Heart } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import type { Database } from '../types/database.types'
 
 import { format } from 'date-fns'
 
 // Types
-export type Challenge = {
-    id: string
-    title: string
-    description: string
-    goal: number
-    unit: string
-    start_date: string
-    end_date: string
-    participants: string[]
-    creator_id: string
-    is_opm?: boolean
-}
-
-export type ChallengeExercise = {
-    id: string
-    challenge_id: string
-    name: string
-    daily_goal: number
-    unit: string
-}
+type Challenge = Database['public']['Tables']['challenges']['Row']
+export type ChallengeExercise = Database['public']['Tables']['challenge_exercises']['Row']
 
 export type Log = {
     id: string
@@ -495,7 +478,7 @@ export const ChallengeDetails = () => {
                     expectedTotal={challenge.goal * expectedRatio}
                     logs={logs}
                     exercises={exercises}
-                    isOpm={challenge.is_opm}
+                    isOpm={challenge.is_opm ?? undefined}
                 />
 
                 {/* Recent Activity Section */}
