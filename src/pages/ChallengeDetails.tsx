@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { QuickLog } from '../components/QuickLog'
 import { ProgressBar } from '../components/ProgressBar'
 import { Leaderboard } from '../components/Leaderboard'
-import { ArrowLeft, Heart } from 'lucide-react'
+import { ArrowLeft, Heart, Pencil, Check, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { Database } from '../types/database.types'
 
@@ -33,6 +33,10 @@ export const ChallengeDetails = () => {
     const [exercises, setExercises] = useState<ChallengeExercise[]>([])
     const [logs, setLogs] = useState<Log[]>([])
     const [loading, setLoading] = useState(true)
+    const [isEditing, setIsEditing] = useState(false)
+    const [editTitle, setEditTitle] = useState('')
+    const [editDescription, setEditDescription] = useState('')
+    const [saving, setSaving] = useState(false)
 
     const [avatars, setAvatars] = useState<Record<string, { url: string | null, name: string | null }>>({})
     const [userLikes, setUserLikes] = useState<Set<string>>(new Set())
@@ -184,6 +188,38 @@ export const ChallengeDetails = () => {
 
         // Optional: refetch to be sure
         // fetchLogs() 
+    }
+
+    const handleSave = async () => {
+        if (!challenge || !id) return
+        if (!editTitle.trim()) {
+            alert("Tittel kan ikke være tom.")
+            return
+        }
+
+        setSaving(true)
+        const { error } = await (supabase as any)
+            .from('challenges')
+            .update({
+                title: editTitle,
+                description: editDescription
+            })
+            .eq('id', id)
+
+        if (error) {
+            alert('Kunne ikke lagre endringer: ' + error.message)
+        } else {
+            setChallenge(prev => prev ? { ...prev, title: editTitle, description: editDescription } : null)
+            setIsEditing(false)
+        }
+        setSaving(false)
+    }
+
+    const startEditing = () => {
+        if (!challenge) return
+        setEditTitle(challenge.title)
+        setEditDescription(challenge.description || '')
+        setIsEditing(true)
     }
 
     const handleJoin = async () => {
@@ -430,12 +466,80 @@ export const ChallengeDetails = () => {
                                 className="absolute inset-0 w-full h-full object-cover z-0"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/40 to-transparent z-10"></div>
-                            <h2 className="text-3xl font-black mb-2 relative z-10 italic tracking-tight uppercase text-white shadow-sm line-clamp-1">
-                                {challenge.title}
-                            </h2>
-                            <p className="text-gray-100 font-medium relative z-10 line-clamp-2 text-sm opacity-90">
-                                {challenge.description || (challenge.is_opm ? "100 Pushups. 100 Situps. 100 Squats. 10km Run. Every single day." : "")}
-                            </p>
+                            <div className="flex items-center gap-3 mb-2 relative z-10 w-full">
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        value={editTitle}
+                                        onChange={(e) => setEditTitle(e.target.value)}
+                                        className="bg-white/20 backdrop-blur-md border border-white/30 rounded-xl px-4 py-2 text-white font-black italic tracking-tight uppercase text-2xl w-full focus:outline-none focus:ring-2 focus:ring-white/50"
+                                        placeholder="Challenge Tittel"
+                                    />
+                                ) : (
+                                    <>
+                                        <h2 className="text-3xl font-black italic tracking-tight uppercase text-white shadow-sm line-clamp-1">
+                                            {challenge.title}
+                                        </h2>
+                                        {(() => {
+                                            const now = new Date()
+                                            const start = new Date(challenge.start_date)
+                                            const end = new Date(challenge.end_date)
+                                            let status = { label: 'Live', color: 'bg-green-500/80 text-white border-green-400' }
+                                            if (now < start) status = { label: 'Kommende', color: 'bg-blue-500/80 text-white border-blue-400' }
+                                            else if (now > end) status = { label: 'Ferdig', color: 'bg-gray-500/80 text-white border-gray-400' }
+
+                                            return (
+                                                <span className={`px-2 py-0.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${status.color}`}>
+                                                    {status.label}
+                                                </span>
+                                            )
+                                        })()}
+                                    </>
+                                )}
+
+                                {user && user.id === challenge.creator_id && !isEditing && (
+                                    <button
+                                        onClick={startEditing}
+                                        className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white ml-auto"
+                                        title="Rediger utfordring"
+                                    >
+                                        <Pencil size={18} />
+                                    </button>
+                                )}
+
+                                {isEditing && (
+                                    <div className="flex gap-2 ml-auto">
+                                        <button
+                                            onClick={handleSave}
+                                            disabled={saving}
+                                            className="p-2 rounded-full bg-green-500 hover:bg-green-600 transition-colors text-white shadow-lg disabled:opacity-50"
+                                            title="Lagre"
+                                        >
+                                            <Check size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setIsEditing(false)}
+                                            className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white shadow-lg"
+                                            title="Avbryt"
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {isEditing ? (
+                                <textarea
+                                    value={editDescription}
+                                    onChange={(e) => setEditDescription(e.target.value)}
+                                    className="bg-white/20 backdrop-blur-md border border-white/30 rounded-xl px-4 py-2 text-white font-medium w-full h-24 focus:outline-none focus:ring-2 focus:ring-white/50 relative z-10"
+                                    placeholder="Challenge Beskrivelse"
+                                />
+                            ) : (
+                                <p className="text-gray-100 font-medium relative z-10 line-clamp-2 text-sm opacity-90">
+                                    {challenge.description || (challenge.is_opm ? "100 Pushups. 100 Situps. 100 Squats. 10km Run. Every single day." : "")}
+                                </p>
+                            )}
                         </div>
                     ) : (
                         <div className="h-4 w-full" />

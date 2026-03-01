@@ -108,6 +108,17 @@ export const Dashboard = () => {
                             }
                         }
 
+                        const getStatus = () => {
+                            const now = new Date()
+                            const start = new Date(challenge.start_date)
+                            const end = new Date(challenge.end_date)
+
+                            if (now < start) return { label: 'Kommende', color: 'bg-blue-100 text-blue-700 border-blue-200' }
+                            if (now > end) return { label: 'Ferdig', color: 'bg-gray-100 text-gray-700 border-gray-200' }
+                            return { label: 'Live', color: 'bg-green-100 text-green-700 border-green-200' }
+                        }
+                        const status = getStatus()
+
                         return (
                             <div key={challenge.id} className="relative group">
                                 <Link
@@ -132,9 +143,12 @@ export const Dashboard = () => {
                                         )}
 
                                         {/* Unit Badge (Floating over image) */}
-                                        <div className="absolute top-4 left-4 z-10">
+                                        <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
                                             <span className="inline-block px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-indigo-700 text-[10px] font-black uppercase tracking-widest shadow-sm border border-indigo-50">
                                                 {challenge.unit}
+                                            </span>
+                                            <span className={`inline-block px-3 py-1 rounded-full backdrop-blur-sm text-[10px] font-black uppercase tracking-widest shadow-sm border ${status.color}`}>
+                                                {status.label}
                                             </span>
                                         </div>
                                     </div>
