@@ -145,7 +145,7 @@ export const CreateChallenge = () => {
             }
 
             // 2. If OPM mode, save the active exercises
-            const newChallengeId = challengeData?.id
+            const newChallengeId = (challengeData as any)?.id
 
             if (isOpmMode && newChallengeId) {
                 const activeExercises = opmExercises.filter(ex => ex.active).map(ex => ({
