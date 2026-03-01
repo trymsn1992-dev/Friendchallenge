@@ -209,51 +209,6 @@ export const CreateChallenge = () => {
                     </div>
                 </button>
 
-                {/* Image Upload Area */}
-                <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Bannerbilde (Valgfritt)</label>
-
-                    {imagePreview ? (
-                        <div className="relative rounded-2xl overflow-hidden aspect-video border border-gray-100 shadow-sm group">
-                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={removeImage}
-                                    className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                                >
-                                    <X size={20} />
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <label className="flex flex-col items-center justify-center aspect-video w-full rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-indigo-300 transition-all cursor-pointer group">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <div className="p-3 rounded-full bg-white shadow-sm mb-3 text-gray-400 group-hover:text-indigo-500 transition-colors">
-                                    <Upload size={24} />
-                                </div>
-                                <p className="text-sm text-gray-500">
-                                    <span className="font-bold text-indigo-600">Klikk for å laste opp</span> eller dra og slipp
-                                </p>
-                                <p className="text-xs text-gray-400 mt-1">PNG, JPG eller WEBP (Max 5MB)</p>
-                            </div>
-                            <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-                        </label>
-                    )}
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Tittel</label>
-                    <input
-                        type="text"
-                        required
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all outline-none"
-                        placeholder={isOpmMode ? "One Punch Man Utfordringen" : "F.eks. 2000 Pushups i Februar"}
-                        value={formData.title}
-                        onChange={e => setFormData({ ...formData, title: e.target.value })}
-                    />
-                </div>
-
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Beskrivelse</label>
                     <div className="relative">
@@ -274,6 +229,39 @@ export const CreateChallenge = () => {
                             {generating ? 'Tenker...' : 'Foreslå med AI'}
                         </button>
                     </div>
+                </div>
+
+                {/* Image Upload Area */}
+                <div className="space-y-2 p-4 border-2 border-dashed border-indigo-100 rounded-3xl bg-indigo-50/30">
+                    <label className="block text-sm font-bold text-indigo-900">Bakgrunnsbilde (Valgfritt)</label>
+
+                    {imagePreview ? (
+                        <div className="relative rounded-2xl overflow-hidden aspect-video border border-gray-100 shadow-sm group">
+                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={removeImage}
+                                    className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <label className="flex flex-col items-center justify-center aspect-video w-full rounded-2xl border-2 border-dashed border-indigo-200 bg-white hover:bg-indigo-50 hover:border-indigo-400 transition-all cursor-pointer group">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <div className="p-3 rounded-full bg-indigo-50 shadow-sm mb-3 text-indigo-400 group-hover:text-indigo-500 transition-colors">
+                                    <Upload size={24} />
+                                </div>
+                                <p className="text-sm text-gray-500">
+                                    <span className="font-bold text-indigo-600">Klikk for å laste opp</span> eller dra og slipp
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">PNG, JPG eller WEBP (Max 5MB)</p>
+                            </div>
+                            <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                        </label>
+                    )}
                 </div>
 
                 {isOpmMode ? (
