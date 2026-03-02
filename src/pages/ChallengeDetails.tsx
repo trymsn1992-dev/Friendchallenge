@@ -324,23 +324,25 @@ export const ChallengeDetails = () => {
                 userDailyProgress[log.user_id][dateKey][exId] += log.amount
             })
 
-            const requiredExercises = exercises.length
 
             return Object.entries(userDailyProgress).map(([userId, days]) => {
-                let saitamaPoints = 0
-
+                // Calculate total per exercise for this user
+                const userTotals: Record<string, number> = {}
                 Object.values(days).forEach(dayExercises => {
-                    let exercisesMet = 0
-                    exercises.forEach(ex => {
-                        if ((dayExercises[ex.id] || 0) >= ex.daily_goal) {
-                            exercisesMet++
-                        }
+                    Object.entries(dayExercises).forEach(([exId, amount]) => {
+                        userTotals[exId] = (userTotals[exId] || 0) + amount
                     })
-                    // 1 point if ALL exercises met their daily goal
-                    if (exercisesMet === requiredExercises && requiredExercises > 0) {
-                        saitamaPoints++
-                    }
                 })
+
+                // Points = MIN(total_ex / goal_ex) for all exercises
+                let saitamaPoints = 0
+                if (exercises.length > 0) {
+                    const exerciseMultiples = exercises.map(ex => {
+                        const total = userTotals[ex.id] || 0
+                        return total / ex.daily_goal
+                    })
+                    saitamaPoints = Math.floor(Math.min(...exerciseMultiples))
+                }
 
                 const profile = avatars[userId]
                 return {
