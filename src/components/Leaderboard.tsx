@@ -114,8 +114,8 @@ export const Leaderboard = ({
                                 </div>
                             </div>
 
-                            {/* Progress Bar (Standard only) */}
-                            {goal && !isOpm && (
+                            {/* Progress Bar (Standard and OPM) */}
+                            {goal && (
                                 <div className="mt-3 w-full pl-12 space-y-1">
                                     <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                                         <div
@@ -127,9 +127,9 @@ export const Leaderboard = ({
                                     {expectedTotal && (
                                         <div className={`text-[10px] font-bold flex items-center gap-1 uppercase tracking-tight ${isAhead ? 'text-emerald-600' : 'text-orange-600'}`}>
                                             {isAhead ? (
-                                                <>🚀 +{Math.round(diff)} foran</>
+                                                <>🚀 +{Math.round(diff * 10) / 10} {isOpm ? 'poeng' : ''} foran</>
                                             ) : (
-                                                <>🐢 -{Math.round(Math.abs(diff))} bak</>
+                                                <>🐢 -{Math.round(Math.abs(diff) * 10) / 10} {isOpm ? 'poeng' : ''} bak</>
                                             )}
                                         </div>
                                     )}

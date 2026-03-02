@@ -121,14 +121,22 @@ export const CreateChallenge = () => {
             }
 
             // 1. Create the challenge
+            let opmGoal = 1
+            if (isOpmMode) {
+                const start = new Date(formData.start_date)
+                const end = new Date(formData.end_date)
+                const diffTime = Math.abs(end.getTime() - start.getTime())
+                opmGoal = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 // +1 to include both dates
+            }
+
             const { data: challengeData, error: challengeError } = await supabase
                 .from('challenges')
                 // @ts-ignore
                 .insert({
                     title: formData.title,
                     description: formData.description,
-                    goal: isOpmMode ? 1 : Number(formData.goal),
-                    unit: isOpmMode ? 'dager' : formData.unit,
+                    goal: isOpmMode ? opmGoal : Number(formData.goal),
+                    unit: isOpmMode ? 'Saitama poeng' : formData.unit,
                     start_date: formData.start_date,
                     end_date: formData.end_date,
                     creator_id: user.id,
