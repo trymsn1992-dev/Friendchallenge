@@ -37,6 +37,7 @@ export const ChallengeDetails = () => {
     const [editTitle, setEditTitle] = useState('')
     const [editDescription, setEditDescription] = useState('')
     const [saving, setSaving] = useState(false)
+    const [logging, setLogging] = useState(false)
 
     const [avatars, setAvatars] = useState<Record<string, { url: string | null, name: string | null }>>({})
     const [userLikes, setUserLikes] = useState<Set<string>>(new Set())
@@ -240,31 +241,35 @@ export const ChallengeDetails = () => {
     }
 
     const handleLog = async (amount: number, exerciseId?: string) => {
-        if (!user || !challenge || !id) return
+        if (!user || !challenge || !id || logging) return
 
-        // Optimistic UI? Or just wait. Let's wait for simplicity.
-        // @ts-ignore
-        await supabase.from('progress_logs').insert({
-            challenge_id: id,
-            user_id: user.id,
-            user_name: user.email?.split('@')[0] || 'Anonym',
-            amount: amount,
-            exercise_id: exerciseId || null
-        })
-
-        // Check if user is in participants, if not add them
-        if (!challenge.participants?.includes(user.id)) {
-            const newParticipants = [...(challenge.participants || []), user.id]
+        setLogging(true)
+        try {
             // @ts-ignore
-            await supabase.from('challenges').update({ participants: newParticipants }).eq('id', id)
+            const { error } = await supabase.from('progress_logs').insert({
+                challenge_id: id,
+                user_id: user.id,
+                user_name: user.email?.split('@')[0] || 'Anonym',
+                amount: amount,
+                exercise_id: exerciseId || null
+            })
+
+            if (error) throw error
+
+            // Check if user is in participants, if not add them
+            if (!challenge.participants?.includes(user.id)) {
+                const newParticipants = [...(challenge.participants || []), user.id]
+                // @ts-ignore
+                await supabase.from('challenges').update({ participants: newParticipants }).eq('id', id)
+            }
+
+            await fetchLogs()
+        } catch (error: any) {
+            console.error('Error logging progress:', error)
+            alert('Kunne ikke logge: ' + error.message)
+        } finally {
+            setLogging(false)
         }
-
-        // AI Motivation removed per user request
-        // const msg = await generateMotivation(amount, challenge.unit, challenge.title)
-        // setMotivation(msg)
-        // setTimeout(() => setMotivation(null), 8000)
-
-        fetchLogs()
     }
 
     const handleDeleteLog = async (logId: string) => {
@@ -279,7 +284,7 @@ export const ChallengeDetails = () => {
             if (error) throw error
 
             // Update local state
-            setLogs(logs.filter(l => l.id !== logId))
+            setLogs(prev => prev.filter(l => l.id !== logId))
         } catch (error: any) {
             console.error('Error deleting log:', error)
             alert('Kunne ikke slette aktiviteten: ' + error.message)
@@ -572,7 +577,7 @@ export const ChallengeDetails = () => {
                                 <QuickLog
                                     onLog={handleLog}
                                     unit={challenge.unit}
-                                    loading={false}
+                                    loading={logging}
                                     exercises={challenge.is_opm ? exercises : undefined}
                                     todayProgress={userTodayProgress}
                                 />
