@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { QuickLog } from '../components/QuickLog'
 import { ProgressBar } from '../components/ProgressBar'
 import { Leaderboard } from '../components/Leaderboard'
-import { ArrowLeft, Heart, Pencil, Check, X } from 'lucide-react'
+import { ArrowLeft, Heart, Pencil, Check, X, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { Database } from '../types/database.types'
 
@@ -265,6 +265,25 @@ export const ChallengeDetails = () => {
         // setTimeout(() => setMotivation(null), 8000)
 
         fetchLogs()
+    }
+
+    const handleDeleteLog = async (logId: string) => {
+        if (!confirm('Er du sikker på at du vil slette denne aktiviteten?')) return
+
+        try {
+            const { error } = await supabase
+                .from('progress_logs')
+                .delete()
+                .eq('id', logId)
+
+            if (error) throw error
+
+            // Update local state
+            setLogs(logs.filter(l => l.id !== logId))
+        } catch (error: any) {
+            console.error('Error deleting log:', error)
+            alert('Kunne ikke slette aktiviteten: ' + error.message)
+        }
     }
 
     // Share and Delete functionality moved to Dashboard
@@ -635,6 +654,16 @@ export const ChallengeDetails = () => {
                                                 <Heart size={14} className={isLiked ? 'fill-current' : ''} />
                                                 <span>{log.likes_count || 0}</span>
                                             </button>
+
+                                            {user && log.user_id === user.id && (
+                                                <button
+                                                    onClick={() => handleDeleteLog(log.id)}
+                                                    className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
+                                                    title="Slett aktivitet"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 )
